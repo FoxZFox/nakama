@@ -20,6 +20,8 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+var _ console.ConsoleServer = (*ConsoleServer)(nil)
+
 type MethodName string
 
 type rpcReflectCache struct {
@@ -222,13 +224,22 @@ func (s *ConsoleServer) initRpcMethodCache() error {
 
 	rpcs := make(map[MethodName]*console.ApiEndpointDescriptor)
 	for _, rpc := range s.runtimeInfo.JavaScriptRpcFunctions {
-		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{Method: rpc}
+		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{
+			Method:       rpc,
+			BodyTemplate: customRpcBodyTemplate(rpc),
+		}
 	}
 	for _, rpc := range s.runtimeInfo.LuaRpcFunctions {
-		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{Method: rpc}
+		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{
+			Method:       rpc,
+			BodyTemplate: customRpcBodyTemplate(rpc),
+		}
 	}
 	for _, rpc := range s.runtimeInfo.GoRpcFunctions {
-		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{Method: rpc}
+		rpcs[MethodName(rpc)] = &console.ApiEndpointDescriptor{
+			Method:       rpc,
+			BodyTemplate: customRpcBodyTemplate(rpc),
+		}
 	}
 
 	s.rpcMethodCache = &rpcReflectCache{
@@ -236,6 +247,220 @@ func (s *ConsoleServer) initRpcMethodCache() error {
 		rpcs:      rpcs,
 	}
 	return nil
+}
+
+func customRpcBodyTemplate(rpc string) string {
+	switch rpc {
+	case "rpc_Claim_Achievement":
+		return `{
+  "achievementId": "<achievement_id>"
+}`
+
+	case "admin_rpc_start_event":
+		return `{
+  "id": "<gacha_id>",
+  "name": "<name>",
+  "detail": "<detail>",
+  "startAt": 0,
+  "endAt": 0,
+  "end-in-second": 0
+}`
+
+	case "admin_rpc_force_end_event":
+		return `{
+  "id": "<event_id>"
+}`
+
+	case "admin_rpc_add_new_mail":
+		return `{
+  "title": "<title>",
+  "body": "<body>",
+  "rewards": [
+    {
+      "itemId": "<item_id>",
+      "type": "<type>",
+      "rarity": ["<rarity>"],
+      "amount": 1
+    }
+  ],
+  "expireAt": 0
+}`
+
+	case "admin_rpc_send_mail":
+		return `{
+  "userId": "<user_id>",
+  "seq": 1
+}`
+
+	case "admin_rpc_leaderboard_write":
+		return `{
+  "id": "<leaderboard_id>",
+  "score": 0,
+  "operator": 0
+}`
+
+	case "cheat_SpawnFirstHorse":
+		return `{
+  "userID": "<user_id>"
+}`
+
+	case "cheat_SpawnHorse_Rarity":
+		return `{
+  "userID": "<user_id>",
+  "rarity": "normal"
+}`
+
+	case "cheat__SpawnStarian_Rarity":
+		return `{
+  "userID": "<user_id>",
+  "rarity": "normal",
+  "type": "trainer"
+}`
+
+	case "rpc_craft_facility":
+		return `{
+  "type": "speed",
+  "rarity": "common"
+}`
+
+	case "rpc_event_pull":
+		return `{
+  "id": "<event_id>",
+  "pullID": "<pull_id>"
+}`
+
+	case "rpc_horse_levelup":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_horse_dissolve":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_horse_promote":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_start_horse_training":
+		return `{
+  "horseID": "<horse_id>",
+  "starainID": "<starian_id>",
+  "trainStat": "speed",
+  "facilityRarity": "common"
+}`
+
+	case "rpc_claim_horse_training":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_horse_rename":
+		return `{
+  "id": "<id>",
+  "new_name": "<new_name>"
+}`
+
+	case "rpc_horse_check_skip_cost":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_horse_skip_training":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_redeem_code":
+		return `{
+  "code": "<code>"
+}`
+
+	case "admin_create_code":
+		return `{
+  "code": "<code>",
+  "type": 0,
+  "rewards": [
+    {
+      "itemID": "<item_id>",
+      "itemType": "<type>",
+      "rarity": ["<rarity>"],
+      "amount": 1
+    }
+  ],
+  "expiry_date": 0
+}`
+
+	case "rpc_mail_claim":
+		return `{
+  "seq": "<seq>"
+}`
+
+	case "rpc_start_race":
+		return `{
+  "stageId": "<stage_id>",
+  "horse": "<horse_id>",
+  "starian": "<starian_id>"
+}`
+
+	case "rpc_roll_gacha":
+		return `{
+  "roll_amount": 1
+}`
+
+	case "rpc_shop_daily_buy":
+		return `{
+  "slotID": "<slot_id>"
+}`
+
+	case "rpc_shop_buy":
+		return `{
+  "section": "<section_id>",
+  "offer": "<offer_id>",
+  "iap": "<google_purchase_payload_optional>",
+  "store": "googleplay"
+}`
+
+	case "rpc_shop_iap_simulate_buy":
+		return `{
+  "section": "<section_id>",
+  "offer": "<offer_id>",
+  "store": "googleplay"
+}`
+
+	case "rpc_shop_iap_simulate_refund":
+		return `{
+  "transactionId": "<transaction_id>",
+  "productId": "<product_id>",
+  "store": "googleplay"
+}`
+
+	case "rpc_starian_levelup":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_starian_promote":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_starian_dissolve":
+		return `{
+  "id": "<id>"
+}`
+
+	case "rpc_starian_rename":
+		return `{
+  "id": "<id>",
+  "new_name": "<new_name>"
+}`
+
+	default:
+		return ""
+	}
 }
 
 func reflectProtoMessageAsJsonTemplate(s reflect.Type) (string, error) {
