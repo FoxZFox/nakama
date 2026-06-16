@@ -210,6 +210,7 @@ func (s *ConsoleServer) initRpcMethodCache() error {
 			if err != nil {
 				return err
 			}
+			//
 		}
 
 		endpoints[MethodName(method.Name)] = &methodReflection{
